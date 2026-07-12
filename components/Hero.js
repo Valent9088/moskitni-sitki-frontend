@@ -8,7 +8,7 @@ export default function Hero() {
   
   {/* Фото на весь екран як задній фон */}
   <img 
-    src="/images/IMG_4373(1).JPG" 
+    src="/images/hero.JPG" 
     alt="Віконна сітка" 
     className="absolute inset-0 w-full h-full object-cover -z-10" 
   />
