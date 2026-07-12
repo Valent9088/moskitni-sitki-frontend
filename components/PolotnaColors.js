@@ -32,12 +32,10 @@ const CANVASES = [
 ];
 
 const PROFILE_COLORS = [
-  { name: "Білий", hex: "#f5f5f0" },
-  { name: "Коричневий", hex: "#6b4a2f" },
-  { name: "Антрацит", hex: "#343a40" },
-  { name: "Золотий дуб", hex: "#c9a06a" },
-  { name: "Вінчестер", hex: "#8a5a34" },
-  { name: "Графіт", hex: "#4b4f52" },
+  { name: "Білий", hex: "#f1f1ea" },
+  { name: "Коричневий", hex: "#442f29" },
+  { name: "Антрацит", hex: "#383e42" },
+  { name: "Золотий дуб", hex: "#c9a06a", image: "/images/golden-oak.jpg" },
 ];
 
 export default function PolotnaColors() {
@@ -76,13 +74,16 @@ export default function PolotnaColors() {
         <div className="flex flex-wrap gap-6">
           {PROFILE_COLORS.map((c) => (
             <div key={c.name} className="flex flex-col items-center gap-2">
-              <span
-                className="w-12 h-12 rounded-full border border-gray-200"
-                style={{ backgroundColor: c.hex }}
+              <span 
+               className="w-12 h-12 rounded-full border border-gray-200 bg-cover bg-center"
+               style={{ 
+               backgroundColor: c.hex,
+               backgroundImage: c.image ? `url(${c.image})` : 'none' 
+              }}
               />
               <span className="text-xs text-gray-500">{c.name}</span>
-            </div>
-          ))}
+          </div>
+))}
         </div>
         <p className="text-xs text-gray-400 mt-4">
           Набір доступних кольорів залежить від обраного класу — уточнюється в калькуляторі.
