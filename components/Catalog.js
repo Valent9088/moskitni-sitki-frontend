@@ -29,8 +29,12 @@ export default function Catalog() {
         {PRODUCTS.map((p) => (
           <div key={p.title} className="fade-in-up bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition">
             {/* TODO: замінити на реальне фото товару */}
-            <div className="aspect-square bg-gray-100 flex items-center justify-center text-xs text-gray-400 p-4 text-center">
-              {p.imgHint}
+            <div className="relative aspect-square bg-gray-100 overflow-hidden">
+              <img 
+              src={p.image} 
+              alt={p.title} 
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" 
+              />
             </div>
             <div className="p-5">
               <h3 className="font-medium text-lg mb-2">{p.title}</h3>
