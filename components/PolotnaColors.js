@@ -1,10 +1,34 @@
 const CANVASES = [
-  { name: "Сіре (стандарт)", desc: "Входить у вартість (Економ, Стандарт, Ексклюзив)" },
-  { name: "Чорне (стандарт)", desc: "Входить у вартість (Преміум, Еліт)" },
-  { name: "Невидимка", desc: "На 20% прозоріша за звичайну" },
-  { name: "Антикішка", desc: "У 7 разів міцніша, витримує кігті тварин" },
-  { name: "Антиалергенна", desc: "Наддрібні комірки затримують пилок і пил" },
-  { name: "Алюмінієва", desc: "Максимальна стійкість до зовнішнього середовища" },
+  { 
+    name: "Сіре (стандарт)", 
+    desc: "Входить у вартість (Стандарт, Ексклюзив)", 
+    image: "/images/gray.jpg" 
+  },
+  { 
+    name: "Чорне (стандарт)", 
+    desc: "Входить у вартість (Преміум, Еліт)", 
+    image: "/images/black.jpg" 
+  },
+  { 
+    name: "Невидимка", 
+    desc: "На 20% прозоріша за звичайну", 
+    image: "/images/invisible.jpg" 
+  },
+  { 
+    name: "Антикішка", 
+    desc: "У 7 разів міцніша, витримує кігті тварин", 
+    image: "/images/anticat.jpg" 
+  },
+  { 
+    name: "Антиалергенна", 
+    desc: "Наддрібні комірки затримують пилок і пил", 
+    image: "/images/antialerg.jpg" 
+  },
+  { 
+    name: "Алюмінієва", 
+    desc: "Максимальна стійкість до зовнішнього середовища", 
+    image: "/images/alumin.jpg" 
+  },
 ];
 
 const PROFILE_COLORS = [
@@ -27,12 +51,25 @@ export default function PolotnaColors() {
         <h3 className="text-xl font-medium mb-6">Типи полотна</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {CANVASES.map((c) => (
-            <div key={c.name} className="border border-gray-100 rounded-xl p-5 hover:border-anthracite/30 transition">
-              <p className="font-medium">{c.name}</p>
-              <p className="text-sm text-gray-500 mt-1">{c.desc}</p>
+          <div key={c.name} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-anthracite/30 transition flex flex-col">
+    
+             {/* Квадратне фото полотна сітки */}
+            <div className="relative aspect-square bg-gray-50 overflow-hidden">
+              <img 
+                src={c.image} 
+                alt={c.name} 
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" 
+              />
+      </div>
+
+            {/* Текстовий блок під фото */}
+            <div className="p-5 flex flex-col flex-grow">
+              <p className="font-medium text-lg text-black">{c.name}</p>
+              <p className="text-sm text-gray-500 mt-2 flex-grow">{c.desc}</p>
             </div>
-          ))}
-        </div>
+
+  </div>
+))}
       </div>
 
       <div className="max-w-5xl mx-auto">
