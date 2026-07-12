@@ -4,7 +4,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative min-h-[80vh] flex flex-col justify-center items-center text-center section-padding text-white overflow-hidden">
+    <section className="relative h-screen flex flex-col justify-center items-center text-center section-padding text-white overflow-hidden">
   
   {/* Фото на весь екран як задній фон */}
   <img 
