@@ -10,11 +10,6 @@ const CANVASES = [
     image: "/images/black.jpg" 
   },
   { 
-    name: "Невидимка", 
-    desc: "На 20% прозоріша за звичайну", 
-    image: "/images/invisible.jpg" 
-  },
-  { 
     name: "Антикішка", 
     desc: "У 7 разів міцніша, витримує кігті тварин", 
     image: "/images/anticat.jpg" 
@@ -28,6 +23,11 @@ const CANVASES = [
     name: "Алюмінієва", 
     desc: "Максимальна стійкість до зовнішнього середовища", 
     image: "/images/alumin.jpg" 
+  },
+  { 
+    name: "Невидимка", 
+    desc: "На 20% прозоріша за звичайну", 
+    image: "/images/invisible.jpg" 
   },
 ];
 
