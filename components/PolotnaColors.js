@@ -49,30 +49,29 @@ export default function PolotnaColors() {
 
       <div className="max-w-5xl mx-auto mb-14">
         <h3 className="text-xl font-medium mb-6">Типи полотна</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {CANVASES.map((c) => (
-          <div key={c.name} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-anthracite/30 transition flex flex-col">
-    
-             {/* Квадратне фото полотна сітки */}
-            <div className="relative aspect-square bg-gray-50 overflow-hidden">
-              <img 
-                src={c.image} 
-                alt={c.name} 
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" 
-              />
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {CANVASES.map((c) => (
+      <div key={c.name} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-anthracite/30 transition flex flex-col">
+        {/* Квадратне фото полотна сітки */}
+        <div className="relative aspect-square bg-gray-50 overflow-hidden">
+          <img 
+            src={c.image} 
+            alt={c.name} 
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" 
+          />
+        </div>
+
+        {/* Текстовий блок під фото */}
+        <div className="p-5 flex flex-col flex-grow">
+          <p className="font-medium text-lg text-black">{c.name}</p>
+          <p className="text-sm text-gray-500 mt-2 flex-grow">{c.desc}</p>
+        </div>
       </div>
-
-            {/* Текстовий блок під фото */}
-            <div className="p-5 flex flex-col flex-grow">
-              <p className="font-medium text-lg text-black">{c.name}</p>
-              <p className="text-sm text-gray-500 mt-2 flex-grow">{c.desc}</p>
-            </div>
-
+    ))}
   </div>
-))}
-      </div>
+</div>
 
-      <div className="max-w-5xl mx-auto">
+<div className="max-w-5xl mx-auto">
         <h3 className="text-xl font-medium mb-6">Кольори профілю</h3>
         <div className="flex flex-wrap gap-6">
           {PROFILE_COLORS.map((c) => (
