@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   CATEGORIES,
   COLOR_LABELS,
@@ -52,8 +52,10 @@ const DEFAULTS = {
 export default function Calculator() {
   const [form, setForm] = useState(DEFAULTS);
   const [cart, setCart] = useState([]); // [{ id, selection, result, quantity, itemTotal, label }]
+  const [justAddedId, setJustAddedId] = useState(null);
 
-  const [step, setStep] = useState("configure"); // configure -> review -> form -> done
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalStage, setModalStage] = useState("review"); // review -> done
   const [orderData, setOrderData] = useState({
     fullName: "",
     phone: "",
@@ -113,8 +115,9 @@ export default function Calculator() {
 
   const addToCart = () => {
     if (!unitResult) return;
+    const id = Date.now() + Math.random().toString(36).slice(2);
     const item = {
-      id: Date.now() + Math.random().toString(36).slice(2),
+      id,
       selection: { ...form },
       result: unitResult,
       quantity,
@@ -122,22 +125,28 @@ export default function Calculator() {
       label: describeSelection(form),
     };
     setCart((c) => [...c, item]);
-    // скидаємо розміри й кількість, щоб зручно було рахувати наступний виріб
     set({ widthMm: "", heightMm: "", quantity: 1 });
+
+    // короткочасне підсвічення підтвердження додавання
+    setJustAddedId(id);
+    setTimeout(() => setJustAddedId((cur) => (cur === id ? null : cur)), 2500);
   };
 
   const removeFromCart = (id) => setCart((c) => c.filter((i) => i.id !== id));
 
   const cartTotal = cart.reduce((s, i) => s + i.itemTotal, 0);
 
+  const openReview = () => {
+    if (cart.length === 0) return;
+    setError("");
+    setModalStage("review");
+    setModalOpen(true);
+  };
+
   const submitOrder = async () => {
     setError("");
     if (!orderData.fullName || !orderData.phone) {
       setError("Заповніть, будь ласка, ім'я та телефон.");
-      return;
-    }
-    if (cart.length === 0) {
-      setError("Додайте хоча б один виріб у кошик.");
       return;
     }
     setSubmitting(true);
@@ -158,7 +167,8 @@ export default function Calculator() {
         }),
       });
       if (!res.ok) throw new Error("Помилка сервера");
-      setStep("done");
+      setModalStage("done");
+      setCart([]);
     } catch (e) {
       setError("Не вдалося надіслати замовлення. Спробуйте ще раз або напишіть нам в Instagram.");
     } finally {
@@ -166,168 +176,207 @@ export default function Calculator() {
     }
   };
 
+  const closeModal = () => {
+    setModalOpen(false);
+    if (modalStage === "done") {
+      // повне скидання після успішної відправки
+      setOrderData({ fullName: "", phone: "", messenger: "viber", contactLink: "", address: "" });
+      setModalStage("review");
+    }
+  };
+
+  // блокуємо скрол фону, коли модалка відкрита
+  useEffect(() => {
+    document.body.style.overflow = modalOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [modalOpen]);
+
   return (
     <section className="section-padding bg-white" id="calculator">
       <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-center">Калькулятор вартості</h2>
       <p className="text-center text-sm text-gray-500 max-w-xl mx-auto mb-10">
-        Розміри вказуйте в міліметрах (мм). Можна порахувати кілька різних
-        виробів — додавайте кожен у кошик, а в кінці надішлете все одним
-        замовленням.
+        Розміри вказуйте в міліметрах (мм). Порахуйте один виріб, додайте
+        його в кошик кнопкою нижче, потім додайте ще — і в кінці надішлете
+        все одним замовленням.
       </p>
 
-      <div className="max-w-3xl mx-auto bg-gray-50 rounded-3xl p-6 md:p-10 fade-in-up">
-        {step === "configure" && (
-          <>
-            {/* Крок 1: Категорія */}
+      <div className="max-w-3xl mx-auto">
+        {/* Панель кошика — завжди видима, липне під час скролу */}
+        <div className="sticky top-3 z-20 mb-6 bg-anthracite text-white rounded-2xl px-5 py-4 shadow-lg flex items-center justify-between gap-4">
+          <div className="text-sm">
+            {cart.length === 0 ? (
+              <span className="text-gray-300">🛒 Кошик порожній — додайте перший виріб</span>
+            ) : (
+              <span>
+                🛒 {cart.length} {cart.length === 1 ? "виріб" : "виробів"} ·{" "}
+                <strong>{cartTotal.toLocaleString("uk-UA")} грн</strong>
+              </span>
+            )}
+          </div>
+          <button
+            onClick={openReview}
+            disabled={cart.length === 0}
+            className="bg-white text-anthracite px-4 py-2 rounded-full text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition whitespace-nowrap"
+          >
+            Надіслати замовлення
+          </button>
+        </div>
+
+        <div className="bg-gray-50 rounded-3xl p-6 md:p-10 fade-in-up">
+          {/* Крок 1: Категорія */}
+          <div className="mb-8">
+            <p className="font-medium mb-3">1. Категорія</p>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORY_OPTIONS.map((c) => (
+                <StepButton key={c.key} active={form.categoryKey === c.key} onClick={() => handleCategoryChange(c.key)}>
+                  {c.label}
+                </StepButton>
+              ))}
+            </div>
+          </div>
+
+          {(form.categoryKey === "windowFrame" || form.categoryKey === "doorFrame") && (
             <div className="mb-8">
-              <p className="font-medium mb-3">1. Категорія</p>
+              <p className="font-medium mb-3">2. Клас</p>
               <div className="flex flex-wrap gap-2">
-                {CATEGORY_OPTIONS.map((c) => (
-                  <StepButton key={c.key} active={form.categoryKey === c.key} onClick={() => handleCategoryChange(c.key)}>
-                    {c.label}
+                {Object.entries(category.models).map(([key, m]) => (
+                  <StepButton key={key} active={form.modelKey === key} onClick={() => set({ modelKey: key, colorKey: "white", canvasKey: "standard" })}>
+                    {m.name}
                   </StepButton>
                 ))}
               </div>
             </div>
+          )}
 
-            {(form.categoryKey === "windowFrame" || form.categoryKey === "doorFrame") && (
-              <div className="mb-8">
-                <p className="font-medium mb-3">2. Клас</p>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(category.models).map(([key, m]) => (
-                    <StepButton key={key} active={form.modelKey === key} onClick={() => set({ modelKey: key, colorKey: "white", canvasKey: "standard" })}>
-                      {m.name}
-                    </StepButton>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {form.categoryKey === "windowRoller" && (
-              <div className="mb-8">
-                <p className="font-medium mb-3">2. Тип системи</p>
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(category.types).map(([key, t]) => (
-                    <StepButton key={key} active={form.typeKey === key} onClick={() => set({ typeKey: key, colorKey: "white" })}>
-                      {t.name}
-                    </StepButton>
-                  ))}
-                </div>
-              </div>
-            )}
-
+          {form.categoryKey === "windowRoller" && (
             <div className="mb-8">
-              <p className="font-medium mb-3">Колір профілю</p>
+              <p className="font-medium mb-3">2. Тип системи</p>
               <div className="flex flex-wrap gap-2">
-                {availableColors.map((c) => (
-                  <StepButton key={c} active={form.colorKey === c} onClick={() => set({ colorKey: c })}>
-                    {COLOR_LABELS[c] || c}
+                {Object.entries(category.types).map(([key, t]) => (
+                  <StepButton key={key} active={form.typeKey === key} onClick={() => set({ typeKey: key, colorKey: "white" })}>
+                    {t.name}
                   </StepButton>
                 ))}
               </div>
             </div>
+          )}
 
-            {availableCanvases.length > 0 && (
-              <div className="mb-8">
-                <p className="font-medium mb-3">3. Полотно</p>
-                <div className="flex flex-wrap gap-2">
-                  {availableCanvases.map((c) => (
-                    <StepButton key={c} active={form.canvasKey === c} onClick={() => set({ canvasKey: c })}>
-                      {CANVAS_LABELS[c] || c}
-                    </StepButton>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="mb-8">
+            <p className="font-medium mb-3">Колір профілю</p>
+            <div className="flex flex-wrap gap-2">
+              {availableColors.map((c) => (
+                <StepButton key={c} active={form.colorKey === c} onClick={() => set({ colorKey: c })}>
+                  {COLOR_LABELS[c] || c}
+                </StepButton>
+              ))}
+            </div>
+          </div>
 
-            {form.categoryKey === "windowFrame" && (
-              <div className="mb-8">
-                <p className="font-medium mb-3">4. Ручки</p>
-                <div className="flex flex-wrap gap-2">
-                  <StepButton active={form.handleKey === "plastic"} onClick={() => set({ handleKey: "plastic" })}>Пластик (+0 грн)</StepButton>
-                  <StepButton active={form.handleKey === "metal"} onClick={() => set({ handleKey: "metal" })}>Метал (+90 грн)</StepButton>
-                </div>
-              </div>
-            )}
-
-            {form.categoryKey === "doorFrame" && form.modelKey === "exclusive" && (
-              <div className="mb-8">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.metalHinges} onChange={(e) => set({ metalHinges: e.target.checked })} />
-                  Металеві завіси з автодотягуванням (+400 грн за 2 шт)
-                </label>
-              </div>
-            )}
-
-            {form.categoryKey === "windowRoller" && (
-              <div className="mb-8">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.brakeMechanism} onChange={(e) => set({ brakeMechanism: e.target.checked })} />
-                  Гальмівний механізм (+800 грн, доступно лише при ширині ≥ 50 см)
-                </label>
-              </div>
-            )}
-
-            {form.categoryKey === "doorFrame" && (
-              <div className="mb-8">
-                <label className="text-sm font-medium block mb-2">Висота імпосту (перегородки), см — опціонально</label>
-                <input
-                  type="number"
-                  value={form.impostHeightCm}
-                  onChange={(e) => set({ impostHeightCm: e.target.value })}
-                  className="border border-gray-300 rounded-lg px-4 py-2 w-40"
-                  placeholder="0"
-                />
-              </div>
-            )}
-
-            <div className="mb-8 grid grid-cols-3 gap-4 max-w-lg">
-              <div>
-                <label className="text-sm font-medium block mb-2">Ширина, мм</label>
-                <input
-                  type="number"
-                  value={form.widthMm}
-                  onChange={(e) => set({ widthMm: e.target.value })}
-                  className="border border-gray-300 rounded-lg px-4 py-2 w-full"
-                  placeholder="напр. 900"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium block mb-2">Висота, мм</label>
-                <input
-                  type="number"
-                  value={form.heightMm}
-                  onChange={(e) => set({ heightMm: e.target.value })}
-                  className="border border-gray-300 rounded-lg px-4 py-2 w-full"
-                  placeholder="напр. 1400"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium block mb-2">Кількість, шт</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={form.quantity}
-                  onChange={(e) => set({ quantity: e.target.value })}
-                  className="border border-gray-300 rounded-lg px-4 py-2 w-full"
-                />
+          {availableCanvases.length > 0 && (
+            <div className="mb-8">
+              <p className="font-medium mb-3">3. Полотно</p>
+              <div className="flex flex-wrap gap-2">
+                {availableCanvases.map((c) => (
+                  <StepButton key={c} active={form.canvasKey === c} onClick={() => set({ canvasKey: c })}>
+                    {CANVAS_LABELS[c] || c}
+                  </StepButton>
+                ))}
               </div>
             </div>
+          )}
 
+          {form.categoryKey === "windowFrame" && (
+            <div className="mb-8">
+              <p className="font-medium mb-3">4. Ручки</p>
+              <div className="flex flex-wrap gap-2">
+                <StepButton active={form.handleKey === "plastic"} onClick={() => set({ handleKey: "plastic" })}>Пластик (+0 грн)</StepButton>
+                <StepButton active={form.handleKey === "metal"} onClick={() => set({ handleKey: "metal" })}>Метал (+90 грн)</StepButton>
+              </div>
+            </div>
+          )}
+
+          {form.categoryKey === "doorFrame" && form.modelKey === "exclusive" && (
             <div className="mb-8">
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.mounted} onChange={(e) => set({ mounted: e.target.checked })} />
-                Потрібен монтаж ({isDoorLike(form.categoryKey) ? "+700 грн/шт" : "+100 грн/шт"} — враховується на кожну одиницю)
+                <input type="checkbox" checked={form.metalHinges} onChange={(e) => set({ metalHinges: e.target.checked })} />
+                Металеві завіси з автодотягуванням (+400 грн за 2 шт)
               </label>
             </div>
+          )}
 
-            <div className="bg-anthracite/5 border border-anthracite/10 rounded-xl p-4 text-sm text-gray-600 mb-8">
-              Мінімальна площа для цього типу: <strong>{category.sMin} м²</strong>. Якщо
-              розрахована площа менша — у формулу підставляється Smin.
+          {form.categoryKey === "windowRoller" && (
+            <div className="mb-8">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.brakeMechanism} onChange={(e) => set({ brakeMechanism: e.target.checked })} />
+                Гальмівний механізм (+800 грн, доступно лише при ширині ≥ 50 см)
+              </label>
             </div>
+          )}
 
-            {unitResult && (
-              <div className="fade-in-up bg-white border border-gray-200 rounded-2xl p-6 mb-8">
+          {form.categoryKey === "doorFrame" && (
+            <div className="mb-8">
+              <label className="text-sm font-medium block mb-2">Висота імпосту (перегородки), см — опціонально</label>
+              <input
+                type="number"
+                value={form.impostHeightCm}
+                onChange={(e) => set({ impostHeightCm: e.target.value })}
+                className="border border-gray-300 rounded-lg px-4 py-2 w-40"
+                placeholder="0"
+              />
+            </div>
+          )}
+
+          <div className="mb-8 grid grid-cols-3 gap-4 max-w-lg">
+            <div>
+              <label className="text-sm font-medium block mb-2">Ширина, мм</label>
+              <input
+                type="number"
+                value={form.widthMm}
+                onChange={(e) => set({ widthMm: e.target.value })}
+                className="border border-gray-300 rounded-lg px-4 py-2 w-full"
+                placeholder="напр. 900"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium block mb-2">Висота, мм</label>
+              <input
+                type="number"
+                value={form.heightMm}
+                onChange={(e) => set({ heightMm: e.target.value })}
+                className="border border-gray-300 rounded-lg px-4 py-2 w-full"
+                placeholder="напр. 1400"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium block mb-2">Кількість, шт</label>
+              <input
+                type="number"
+                min="1"
+                value={form.quantity}
+                onChange={(e) => set({ quantity: e.target.value })}
+                className="border border-gray-300 rounded-lg px-4 py-2 w-full"
+              />
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={form.mounted} onChange={(e) => set({ mounted: e.target.checked })} />
+              Потрібен монтаж ({isDoorLike(form.categoryKey) ? "+700 грн/шт" : "+100 грн/шт"} — враховується на кожну одиницю)
+            </label>
+          </div>
+
+          <div className="bg-anthracite/5 border border-anthracite/10 rounded-xl p-4 text-sm text-gray-600 mb-8">
+            Мінімальна площа для цього типу: <strong>{category.sMin} м²</strong>. Якщо
+            розрахована площа менша — у формулу підставляється Smin.
+          </div>
+
+          {/* Панель результату — завжди на екрані, навіть без розмірів */}
+          <div className="fade-in-up bg-white border border-gray-200 rounded-2xl p-6 mb-2">
+            {unitResult ? (
+              <>
                 <p className="text-sm text-gray-500 mb-2">
                   Площа: {unitResult.rawArea} м²
                   {unitResult.sMinApplied && (
@@ -347,163 +396,185 @@ export default function Calculator() {
                     <li key={`fixed-${i}`}>{a.label}: +{a.price} грн/шт</li>
                   ))}
                 </ul>
-                <button
-                  onClick={addToCart}
-                  className="mt-5 w-full bg-anthracite text-white py-3 rounded-full font-medium hover:opacity-90 transition"
-                >
-                  + Додати до кошика
-                </button>
-              </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-4">
+                Вкажіть ширину і висоту вище, щоб побачити ціну
+              </p>
             )}
+            <button
+              onClick={addToCart}
+              disabled={!unitResult}
+              className="mt-5 w-full bg-anthracite text-white py-3 rounded-full font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition"
+            >
+              + Додати до кошика
+            </button>
+          </div>
+        </div>
 
-            {cart.length > 0 && (
-              <div className="fade-in-up border-t border-gray-200 pt-6 mt-2">
-                <p className="font-medium mb-4">Ваш кошик ({cart.length})</p>
-                <ul className="space-y-3 mb-6">
+        {/* Список кошика — завжди видимий блок під калькулятором */}
+        <div className="fade-in-up mt-6 bg-gray-50 rounded-3xl p-6 md:p-8">
+          <p className="font-medium mb-4">Ваш кошик {cart.length > 0 && `(${cart.length})`}</p>
+          {cart.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">
+              Тут з'являться вироби, які ви додасте. Налаштуйте виріб вище і
+              натисніть «Додати до кошика».
+            </p>
+          ) : (
+            <>
+              <ul className="space-y-3 mb-6">
+                {cart.map((item) => (
+                  <li
+                    key={item.id}
+                    className={`flex justify-between items-start bg-white border rounded-xl p-4 text-sm transition ${
+                      justAddedId === item.id ? "border-green-400 ring-2 ring-green-200" : "border-gray-200"
+                    }`}
+                  >
+                    <div>
+                      {justAddedId === item.id && (
+                        <p className="text-green-600 text-xs font-medium mb-1">✓ Додано</p>
+                      )}
+                      <p className="font-medium">{item.label}</p>
+                      <p className="text-gray-500">{item.quantity} шт × {item.result.total.toLocaleString("uk-UA")} грн</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-4">
+                      <p className="font-medium">{item.itemTotal.toLocaleString("uk-UA")} грн</p>
+                      <button onClick={() => removeFromCart(item.id)} className="text-xs text-red-500 hover:underline mt-1">
+                        Видалити
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-between items-center text-lg font-semibold mb-6">
+                <span>Разом:</span>
+                <span>{cartTotal.toLocaleString("uk-UA")} грн</span>
+              </div>
+              <button
+                onClick={openReview}
+                className="w-full bg-anthracite text-white py-4 rounded-full font-medium hover:opacity-90 transition"
+              >
+                Надіслати замовлення
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Модальне вікно: підсумок + форма + фінальна відправка */}
+      {modalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={(e) => e.target === e.currentTarget && closeModal()}
+        >
+          <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto p-6 md:p-8 fade-in-up">
+            {modalStage === "review" && (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="font-medium text-lg">Підсумок замовлення</h3>
+                  <button onClick={closeModal} className="text-gray-400 hover:text-anthracite text-xl leading-none">
+                    ✕
+                  </button>
+                </div>
+
+                <ul className="space-y-3 mb-4">
                   {cart.map((item) => (
-                    <li key={item.id} className="flex justify-between items-start bg-white border border-gray-200 rounded-xl p-4 text-sm">
+                    <li key={item.id} className="flex justify-between bg-gray-50 rounded-xl p-4 text-sm">
                       <div>
                         <p className="font-medium">{item.label}</p>
                         <p className="text-gray-500">{item.quantity} шт × {item.result.total.toLocaleString("uk-UA")} грн</p>
                       </div>
-                      <div className="text-right shrink-0 ml-4">
-                        <p className="font-medium">{item.itemTotal.toLocaleString("uk-UA")} грн</p>
-                        <button onClick={() => removeFromCart(item.id)} className="text-xs text-red-500 hover:underline mt-1">
-                          Видалити
-                        </button>
-                      </div>
+                      <p className="font-medium">{item.itemTotal.toLocaleString("uk-UA")} грн</p>
                     </li>
                   ))}
                 </ul>
-                <div className="flex justify-between items-center text-lg font-semibold mb-6">
+                <div className="flex justify-between items-center text-xl font-semibold mb-6 pb-6 border-b border-gray-200">
                   <span>Разом:</span>
                   <span>{cartTotal.toLocaleString("uk-UA")} грн</span>
                 </div>
+
+                <h4 className="font-medium mb-3">Ваші контакти</h4>
+                <div className="grid gap-3 mb-4">
+                  <input
+                    placeholder="Ім'я"
+                    value={orderData.fullName}
+                    onChange={(e) => setOrderData({ ...orderData, fullName: e.target.value })}
+                    className="border border-gray-300 rounded-lg px-4 py-3"
+                  />
+                  <input
+                    placeholder="Номер телефону"
+                    value={orderData.phone}
+                    onChange={(e) => setOrderData({ ...orderData, phone: e.target.value })}
+                    className="border border-gray-300 rounded-lg px-4 py-3"
+                  />
+                  <select
+                    value={orderData.messenger}
+                    onChange={(e) => setOrderData({ ...orderData, messenger: e.target.value })}
+                    className="border border-gray-300 rounded-lg px-4 py-3"
+                  >
+                    <option value="viber">Viber</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="telegram">Telegram</option>
+                  </select>
+                  <input
+                    placeholder="Посилання на Instagram-профіль або нікнейм"
+                    value={orderData.contactLink}
+                    onChange={(e) => setOrderData({ ...orderData, contactLink: e.target.value })}
+                    className="border border-gray-300 rounded-lg px-4 py-3"
+                  />
+                  <input
+                    placeholder="Адреса доставки (місто, вулиця, будинок, квартира)"
+                    value={orderData.address}
+                    onChange={(e) => setOrderData({ ...orderData, address: e.target.value })}
+                    className="border border-gray-300 rounded-lg px-4 py-3"
+                  />
+                </div>
+
+                <p className="text-xs text-gray-500 mb-4">
+                  Зверніть увагу: всі вироби виготовляються за індивідуальними
+                  розмірами. Після обробки заявки менеджер зв'яжеться з вами в
+                  Instagram або в соцмережах для уточнення деталей. Запуск у
+                  виробництво здійснюється після внесення 50% передоплати.
+                </p>
+
+                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={closeModal}
+                    className="flex-1 border border-anthracite text-anthracite py-4 rounded-full font-medium hover:bg-anthracite/5 transition"
+                  >
+                    ← Редагувати кошик
+                  </button>
+                  <button
+                    onClick={submitOrder}
+                    disabled={submitting}
+                    className="flex-1 bg-anthracite text-white py-4 rounded-full font-medium disabled:opacity-40 hover:opacity-90 transition"
+                  >
+                    {submitting ? "Надсилання..." : "Надіслати замовлення"}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modalStage === "done" && (
+              <div className="text-center py-8">
+                <p className="text-xl font-medium mb-2">Дякуємо за замовлення! 🎉</p>
+                <p className="text-gray-500 text-sm mb-6">
+                  Менеджер зв'яжеться з вами в Instagram або в соцмережах для
+                  уточнення деталей.
+                </p>
                 <button
-                  onClick={() => setStep("review")}
-                  className="w-full bg-anthracite text-white py-4 rounded-full font-medium hover:opacity-90 transition"
+                  onClick={closeModal}
+                  className="bg-anthracite text-white px-8 py-3 rounded-full font-medium hover:opacity-90 transition"
                 >
-                  Прорахунок
+                  Закрити
                 </button>
               </div>
             )}
-          </>
-        )}
-
-        {step === "review" && (
-          <div className="fade-in-up">
-            <h3 className="font-medium text-lg mb-4">Перевірте ваше замовлення</h3>
-            <ul className="space-y-3 mb-6">
-              {cart.map((item) => (
-                <li key={item.id} className="flex justify-between bg-white border border-gray-200 rounded-xl p-4 text-sm">
-                  <div>
-                    <p className="font-medium">{item.label}</p>
-                    <p className="text-gray-500">{item.quantity} шт × {item.result.total.toLocaleString("uk-UA")} грн</p>
-                  </div>
-                  <p className="font-medium">{item.itemTotal.toLocaleString("uk-UA")} грн</p>
-                </li>
-              ))}
-            </ul>
-            <div className="flex justify-between items-center text-xl font-semibold mb-6">
-              <span>Разом:</span>
-              <span>{cartTotal.toLocaleString("uk-UA")} грн</span>
-            </div>
-
-            <div className="bg-anthracite text-white rounded-xl p-4 text-sm mb-6">
-              Працюємо за передоплатою 50%. Замовлення запускається в роботу
-              одразу після підтвердження менеджером.
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep("configure")}
-                className="flex-1 border border-anthracite text-anthracite py-3 rounded-full font-medium hover:bg-anthracite/5 transition"
-              >
-                ← Додати ще виріб
-              </button>
-              <button
-                onClick={() => setStep("form")}
-                className="flex-1 bg-anthracite text-white py-3 rounded-full font-medium hover:opacity-90 transition"
-              >
-                Продовжити →
-              </button>
-            </div>
           </div>
-        )}
-
-        {step === "form" && (
-          <div className="fade-in-up">
-            <h3 className="font-medium text-lg mb-4">Оформлення замовлення</h3>
-            <div className="grid gap-3 mb-4">
-              <input
-                placeholder="Ім'я"
-                value={orderData.fullName}
-                onChange={(e) => setOrderData({ ...orderData, fullName: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-3"
-              />
-              <input
-                placeholder="Номер телефону"
-                value={orderData.phone}
-                onChange={(e) => setOrderData({ ...orderData, phone: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-3"
-              />
-              <select
-                value={orderData.messenger}
-                onChange={(e) => setOrderData({ ...orderData, messenger: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-3"
-              >
-                <option value="viber">Viber</option>
-                <option value="whatsapp">WhatsApp</option>
-                <option value="telegram">Telegram</option>
-              </select>
-              <input
-                placeholder="Посилання на Instagram-профіль або нікнейм"
-                value={orderData.contactLink}
-                onChange={(e) => setOrderData({ ...orderData, contactLink: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-3"
-              />
-              <input
-                placeholder="Адреса доставки (місто, вулиця, будинок, квартира)"
-                value={orderData.address}
-                onChange={(e) => setOrderData({ ...orderData, address: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-3"
-              />
-            </div>
-            <p className="text-xs text-gray-500 mb-4">
-              Зверніть увагу: всі вироби виготовляються за індивідуальними
-              розмірами. Після обробки заявки менеджер зв'яжеться з вами в
-              Instagram або в соцмережах для уточнення деталей. Запуск у
-              виробництво здійснюється після внесення 50% передоплати.
-            </p>
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep("review")}
-                className="flex-1 border border-anthracite text-anthracite py-4 rounded-full font-medium hover:bg-anthracite/5 transition"
-              >
-                ← Назад
-              </button>
-              <button
-                onClick={submitOrder}
-                disabled={submitting}
-                className="flex-1 bg-anthracite text-white py-4 rounded-full font-medium disabled:opacity-40 hover:opacity-90 transition"
-              >
-                {submitting ? "Надсилання..." : "Підтвердити та надіслати замовлення"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === "done" && (
-          <div className="text-center py-8 fade-in-up">
-            <p className="text-xl font-medium mb-2">Дякуємо за замовлення! 🎉</p>
-            <p className="text-gray-500 text-sm">
-              Менеджер зв'яжеться з вами в Instagram або в соцмережах для
-              уточнення деталей.
-            </p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }
