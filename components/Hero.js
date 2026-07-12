@@ -5,6 +5,7 @@ export default function Hero() {
 
   return (
     <section className="min-h-[80vh] flex flex-col justify-center items-center text-center section-padding bg-white">
+      <img src="/images/IMG_4373(1).JPG" alt="Віконна сітка" className="aspect-square object-cover" />
       <h1 className="fade-in-up text-4xl md:text-6xl font-semibold tracking-tight text-anthracite max-w-3xl">
         Москітні сітки під замовлення
       </h1>
