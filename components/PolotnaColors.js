@@ -1,12 +1,12 @@
 const CANVASES = [
   { 
-    name: "Сіре (стандарт)", 
+    name: "Сіре", 
     desc: "Входить у вартість (Стандарт, Ексклюзив)", 
     image: "/images/gray.jpg" 
   },
   { 
-    name: "Чорне (стандарт)", 
-    desc: "Входить у вартість (Преміум, Еліт)", 
+    name: "Чорне", 
+    desc: "Естетичніший вигляд.Входить у вартість (Преміум, Еліт)", 
     image: "/images/black.jpg" 
   },
   { 
@@ -36,6 +36,7 @@ const PROFILE_COLORS = [
   { name: "Коричневий", hex: "#442f29" },
   { name: "Антрацит", hex: "#383e42" },
   { name: "Золотий дуб", hex: "#c9a06a", image: "/images/golden-oak.jpg" },
+  { name: "Горіх", hex: "#6b4c35", image: "/images/walnut.jpg" },
 ];
 
 export default function PolotnaColors() {
@@ -45,25 +46,37 @@ export default function PolotnaColors() {
         Типи полотна та кольори профілю
       </h2>
 
-      <div className="max-w-5xl mx-auto mb-14">
-        <h3 className="text-xl font-medium mb-6">Типи полотна</h3>
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+  {/* БЛОК 1: ТИПИ ПОЛОТНА */}
+<div className="max-w-5xl mx-auto mb-20">
+  <h3 className="text-xl font-medium mb-8 text-gray-800 tracking-tight">Типи полотна</h3>
+  
+  {/* Збільшили відступи між картками за допомогою gap-8 */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
     {CANVASES.map((c) => (
-      <div key={c.name} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-anthracite/30 transition flex flex-col">
-        {/* Квадратне фото полотна сітки */}
-        <div className="relative aspect-square bg-gray-50 overflow-hidden">
+      <div 
+        key={c.name} 
+        className="group bg-white rounded-xl overflow-hidden transition-all duration-300 hover:translate-y-[-4px]"
+      >
+        
+        {/* Фото стало елегантною вузькою смугою aspect-[21/9] замість великого квадрата */}
+        <div className="relative aspect-[21/9] bg-gray-50 overflow-hidden rounded-lg border border-gray-100">
           <img 
             src={c.image} 
             alt={c.name} 
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" 
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
           />
         </div>
 
-        {/* Текстовий блок під фото */}
-        <div className="p-5 flex flex-col flex-grow">
-          <p className="font-medium text-lg text-black">{c.name}</p>
-          <p className="text-sm text-gray-500 mt-2 flex-grow">{c.desc}</p>
+        {/* Текстовий блок без зайвих ліній, чистий мінімалізм */}
+        <div className="pt-4 pb-2 flex flex-col">
+          <p className="font-semibold text-base text-gray-900 tracking-tight transition-colors duration-300 group-hover:text-black">
+            {c.name}
+          </p>
+          <p className="text-sm text-gray-400 mt-1.5 leading-relaxed font-light">
+            {c.desc}
+          </p>
         </div>
+
       </div>
     ))}
   </div>
