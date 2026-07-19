@@ -45,7 +45,7 @@ const DEFAULTS = {
   mounted: false,
   widthMm: "",
   heightMm: "",
-  impostHeightMm: "", // Змінено на мм
+  impostHeightMm: "",
   quantity: 1,
 };
 
@@ -86,6 +86,7 @@ export default function Calculator() {
       if (!model?.canvases) return [];
       const allKeys = Object.keys(model.canvases);
 
+      // Логіка підтягування полотен (залежить від наявності в pricing.js)
       if (form.modelKey === "standard") return allKeys.filter(k => k === "standard"); 
       if (form.modelKey === "exclusive") return allKeys.filter(k => k === "standard" || k === "black");
       return allKeys;
@@ -99,14 +100,9 @@ export default function Calculator() {
     if (cat.models) patch.modelKey = Object.keys(cat.models)[0];
     if (cat.types) patch.typeKey = Object.keys(cat.types)[0];
     
-    // Переконатися, що першим доступним кольором обирається наявний
-    if (key === "doorPliseStandard") {
-      patch.colorKey = "white"; // Антрацит прибрано, білий доступний
-    }
-
-    if (key !== "windowFrame" && key !== "doorFrame") {
-      patch.canvasKey = "black";
-    }
+    if (key === "doorPliseStandard") patch.colorKey = "white"; 
+    if (key !== "windowFrame" && key !== "doorFrame") patch.canvasKey = "black";
+    
     set(patch);
   };
 
@@ -115,9 +111,10 @@ export default function Calculator() {
     try { return calculatePrice(form); } catch (e) { return null; }
   }, [JSON.stringify(form)]);
 
-  // Перевірка чи заповнене обов'язкове поле імпосту для дверей
+  // ВАЛІДАЦІЯ: перевірка чи заповнені всі обов'язкові поля
   const isImpostValid = form.categoryKey !== "doorFrame" || !!form.impostHeightMm;
-  const canAddToCart = !!unitResult && isImpostValid;
+  const isSizesValid = !!form.widthMm && !!form.heightMm && !!form.quantity && form.quantity > 0;
+  const canAddToCart = !!unitResult && isImpostValid && isSizesValid;
 
   const quantity = Math.max(1, Number(form.quantity) || 1);
   const itemTotal = unitResult ? unitResult.total * quantity : null;
@@ -203,7 +200,6 @@ export default function Calculator() {
           Вкажіть розміри в міліметрах, оберіть потрібні параметри виробу, додайте його до кошика та надішліть готове замовлення.
         </p>
 
-        {/* Плаваюча панель кошика */}
         <div className="sticky top-4 z-30 mb-8 bg-black/95 backdrop-blur text-white rounded-2xl px-5 py-4 shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all duration-300">
           <div className="text-sm font-medium text-center sm:text-left flex items-center justify-center sm:justify-start gap-2">
             {cart.length === 0 ? (
@@ -223,7 +219,6 @@ export default function Calculator() {
           </button>
         </div>
 
-        {/* Основна форма калькулятора */}
         <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-8 md:p-10 shadow-sm space-y-8">
           
           <div>
@@ -297,26 +292,36 @@ export default function Calculator() {
             </div>
           )}
 
-          {/* Додаткові опції */}
-          {(form.metalHinges || form.brakeMechanism || form.categoryKey === "doorFrame") && (
+          {/* Додаткові опції: Завіси (двері), Гальма (ролети) */}
+          {(form.categoryKey === "doorFrame" || form.categoryKey === "windowRoller") && (
             <div className="space-y-4 pt-4 border-t border-gray-100">
-              {form.categoryKey === "doorFrame" && form.modelKey === "exclusive" && (
-                <label className="flex items-center gap-3 text-sm text-gray-600 select-none cursor-pointer">
-                  <input type="checkbox" checked={form.metalHinges} onChange={(e) => set({ metalHinges: e.target.checked })} className="rounded border-gray-300 text-black focus:ring-black w-4 h-4" />
-                  Металеві завіси з автоматичним дотягуванням (+400 грн за 2 шт)
-                </label>
-              )}
-
-              {form.categoryKey === "windowRoller" && (
-                <label className="flex items-center gap-3 text-sm text-gray-600 select-none cursor-pointer">
-                  <input type="checkbox" checked={form.brakeMechanism} onChange={(e) => set({ brakeMechanism: e.target.checked })} className="rounded border-gray-300 text-black focus:ring-black w-4 h-4" />
-                  Плавний гальмівний механізм (+800 грн, доступно при ширині ≥ 50 см)
-                </label>
-              )}
-
-              {/* Обов'язкове поле імпосту */}
+              
+              {/* Логіка завіс для дверей */}
               {form.categoryKey === "doorFrame" && (
-                <div className="w-full max-w-xs">
+                <label className={`flex items-center gap-3 text-sm select-none ${["standard", "exclusive"].includes(form.modelKey) ? "cursor-pointer text-gray-700" : "cursor-default text-gray-500"}`}>
+                  <input
+                    type="checkbox"
+                    checked={["standard", "exclusive"].includes(form.modelKey) ? form.metalHinges : true}
+                    onChange={(e) => {
+                      if (["standard", "exclusive"].includes(form.modelKey)) set({ metalHinges: e.target.checked });
+                    }}
+                    disabled={!["standard", "exclusive"].includes(form.modelKey)}
+                    className="rounded border-gray-300 text-black focus:ring-black w-4 h-4 disabled:bg-gray-200 disabled:border-gray-300"
+                  />
+                  Металеві завіси з автоматичним дотягуванням ({["standard", "exclusive"].includes(form.modelKey) ? "+400 грн за 2 шт" : "входять у вартість"})
+                </label>
+              )}
+
+              {/* Відновлений чекбокс Гальмівного механізму для ролет */}
+              {form.categoryKey === "windowRoller" && (
+                <label className="flex items-center gap-3 text-sm text-gray-700 select-none cursor-pointer">
+                  <input type="checkbox" checked={form.brakeMechanism} onChange={(e) => set({ brakeMechanism: e.target.checked })} className="rounded border-gray-300 text-black focus:ring-black w-4 h-4" />
+                  Плавний гальмівний механізм (+800 грн, доступно при ширині ≥ 500 мм)
+                </label>
+              )}
+
+              {form.categoryKey === "doorFrame" && (
+                <div className="w-full max-w-xs mt-4">
                   <label className="text-sm font-semibold block mb-2 text-gray-700">Висота перегородки (імпосту), мм *</label>
                   <input
                     type="number"
@@ -331,7 +336,7 @@ export default function Calculator() {
                     placeholder="напр. 900"
                   />
                   {!form.impostHeightMm && (
-                    <p className="text-[11px] text-amber-600 mt-1.5 font-medium">Це поле є обов'язковим для дверей</p>
+                    <p className="text-[11px] text-amber-600 mt-1.5 font-medium">Обов'язкове поле</p>
                   )}
                 </div>
               )}
@@ -339,7 +344,7 @@ export default function Calculator() {
           )}
 
           <div className="pt-6 border-t border-gray-100">
-            <label className="block text-sm font-semibold text-gray-800 mb-4 tracking-tight">Вкажіть розміри виробу та кількість</label>
+            <label className="block text-sm font-semibold text-gray-800 mb-4 tracking-tight">Вкажіть розміри виробу та кількість *</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-xl">
               <div>
                 <span className="text-xs text-gray-400 block mb-1.5 uppercase tracking-wider font-medium">Ширина (мм)</span>
@@ -348,7 +353,9 @@ export default function Calculator() {
                   inputMode="numeric"
                   value={form.widthMm}
                   onChange={(e) => set({ widthMm: e.target.value })}
-                  className="border border-gray-200 focus:border-gray-900 focus:ring-0 rounded-xl px-4 py-3 w-full text-base font-medium placeholder-gray-300 transition shadow-sm"
+                  className={`border focus:ring-0 rounded-xl px-4 py-3 w-full text-base font-medium placeholder-gray-300 transition shadow-sm ${
+                    !form.widthMm ? "border-amber-300 focus:border-amber-500 bg-amber-50/30" : "border-gray-200 focus:border-gray-900"
+                  }`}
                   placeholder="напр. 850"
                 />
               </div>
@@ -359,7 +366,9 @@ export default function Calculator() {
                   inputMode="numeric"
                   value={form.heightMm}
                   onChange={(e) => set({ heightMm: e.target.value })}
-                  className="border border-gray-200 focus:border-gray-900 focus:ring-0 rounded-xl px-4 py-3 w-full text-base font-medium placeholder-gray-300 transition shadow-sm"
+                  className={`border focus:ring-0 rounded-xl px-4 py-3 w-full text-base font-medium placeholder-gray-300 transition shadow-sm ${
+                    !form.heightMm ? "border-amber-300 focus:border-amber-500 bg-amber-50/30" : "border-gray-200 focus:border-gray-900"
+                  }`}
                   placeholder="напр. 1450"
                 />
               </div>
@@ -371,10 +380,15 @@ export default function Calculator() {
                   min="1"
                   value={form.quantity}
                   onChange={(e) => set({ quantity: e.target.value })}
-                  className="border border-gray-200 focus:border-gray-900 focus:ring-0 rounded-xl px-4 py-3 w-full text-base font-semibold text-center transition shadow-sm"
+                  className={`border focus:ring-0 rounded-xl px-4 py-3 w-full text-base font-semibold text-center transition shadow-sm ${
+                    !form.quantity || form.quantity < 1 ? "border-amber-300 focus:border-amber-500 bg-amber-50/30" : "border-gray-200 focus:border-gray-900"
+                  }`}
                 />
               </div>
             </div>
+            {(!form.widthMm || !form.heightMm) && (
+              <p className="text-[11px] text-amber-600 mt-2 font-medium">Будь ласка, заповніть обов'язкові поля розмірів</p>
+            )}
           </div>
 
           <div className="pt-2">
@@ -436,18 +450,10 @@ export default function Calculator() {
             <button
               onClick={addToCart}
               disabled={!canAddToCart}
-              className="mt-6 w-full bg-black text-white py-4 rounded-xl font-semibold text-base shadow-md disabled:opacity-20 disabled:cursor-not-allowed hover:bg-gray-900 transition active:scale-[0.99]"
+              className="mt-6 w-full bg-black text-white py-4 rounded-xl font-semibold text-base shadow-md disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-900 transition active:scale-[0.99]"
             >
               + Додати виріб до кошика
             </button>
-          </div>
-
-          {/* НОВИЙ ВІЗУАЛЬНИЙ БЛОК: Інформативне повідомлення */}
-          <div className="bg-gray-100/60 border border-gray-200/60 rounded-xl p-5 text-sm text-gray-600 font-light leading-relaxed flex gap-3 items-start">
-            <span className="text-xl">ℹ️</span>
-            <p>
-              <strong className="font-medium text-gray-800">Зверніть увагу:</strong> всі вироби виготовляються за індивідуальними розмірами. Після обробки заявки менеджер зв'яжеться з вами в обраному месенджері або в соцмережах для уточнення деталей. Запуск у виробництво здійснюється після внесення 50% передоплати.
-            </p>
           </div>
 
         </div>
@@ -548,7 +554,6 @@ export default function Calculator() {
                   />
                   
                   <div>
-                    {/* Змінений підпис для месенджера */}
                     <span className="text-xs text-gray-400 block mb-1.5 font-medium uppercase tracking-wide">Бажаний месенджер для зв'язку</span>
                     <select
                       value={orderData.messenger}

@@ -37,13 +37,13 @@ export default function MeasureGuide() {
           </div>
         </div>
 
-        {/* ПРАВА КОЛОНКА З КАРТИНКОЮ (займає 7 колонок з 12 — стала помітно більшою!) */}
-        <div className="md:col-span-7 w-full">
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 p-4 md:p-8 flex items-center justify-center">
+        {/* ПРАВА КОЛОНКА З КАРТИНКОЮ */}
+        <div className="md:col-span-7 w-full flex items-center justify-center">
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 w-full">
             <img 
               src="/images/window-scheme.jpg" 
               alt="Схема заміру вікна" 
-              className="w-full h-auto max-h-[480px] object-contain transition-transform duration-500 hover:scale-[1.02]" 
+              className="w-full h-auto object-cover" 
             />
           </div>
         </div>

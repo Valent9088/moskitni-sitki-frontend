@@ -26,7 +26,7 @@ const CANVASES = [
   },
   { 
     name: "Невидимка", 
-    desc: "На 20% прозоріша за звичайну", 
+    desc: "На 20% прозоріша за звичайну за допомогою технології BetterVue", 
     image: "/images/invisible.jpg" 
   },
 ];
