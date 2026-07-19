@@ -41,7 +41,7 @@ const PROFILE_COLORS = [
 export default function PolotnaColors() {
   return (
     <section className="section-padding bg-white" id="polotna">
-      <h2 className="text-3xl md:text-4xl font-semibold mb-12 text-center">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-10 md:mb-12 text-center">
         Типи полотна та кольори профілю
       </h2>
 
@@ -71,7 +71,7 @@ export default function PolotnaColors() {
 
 <div className="max-w-5xl mx-auto">
         <h3 className="text-xl font-medium mb-6">Кольори профілю</h3>
-        <div className="flex flex-wrap gap-6">
+        <div className="flex flex-wrap gap-4 sm:gap-6">
           {PROFILE_COLORS.map((c) => (
             <div key={c.name} className="flex flex-col items-center gap-2">
               <span 

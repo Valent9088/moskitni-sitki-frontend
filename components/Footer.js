@@ -37,14 +37,14 @@ export default function Footer() {
                 placeholder="Ім'я"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="px-4 py-3 rounded-lg text-anthracite outline-none"
+                className="px-4 py-3 rounded-lg text-anthracite outline-none text-base"
               />
               <input
                 required
                 placeholder="Телефон"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="px-4 py-3 rounded-lg text-anthracite outline-none"
+                className="px-4 py-3 rounded-lg text-anthracite outline-none text-base"
               />
               <button className="bg-white text-anthracite rounded-lg py-3 font-medium hover:opacity-90 transition">
                 Надіслати

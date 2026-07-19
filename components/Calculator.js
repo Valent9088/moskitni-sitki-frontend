@@ -22,7 +22,7 @@ function StepButton({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 rounded-full text-sm border transition ${
+      className={`px-3.5 py-2.5 sm:px-4 sm:py-2 rounded-full text-sm border transition ${
         active
           ? "bg-anthracite text-white border-anthracite"
           : "bg-white text-anthracite border-gray-300 hover:border-anthracite"
@@ -197,15 +197,14 @@ export default function Calculator() {
     <section className="section-padding bg-white" id="calculator">
       <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-center">Калькулятор вартості</h2>
       <p className="text-center text-sm text-gray-500 max-w-xl mx-auto mb-10">
-        Розміри вказуйте в міліметрах (мм). Порахуйте один виріб, додайте
-        його в кошик кнопкою нижче, потім додайте ще — і в кінці надішлете
-        все одним замовленням.
+        Розміри вказуйте в міліметрах (мм). Оберіть опції виробу (виробів), вкажіть розміри,
+        додайте його (їх) в кошик та в кінці надішліть все одним замовленням.
       </p>
 
       <div className="max-w-3xl mx-auto">
         {/* Панель кошика — завжди видима, липне під час скролу */}
-        <div className="sticky top-3 z-20 mb-6 bg-anthracite text-white rounded-2xl px-5 py-4 shadow-lg flex items-center justify-between gap-4">
-          <div className="text-sm">
+        <div className="sticky top-2 sm:top-3 z-20 mb-6 bg-anthracite text-white rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="text-sm text-center sm:text-left">
             {cart.length === 0 ? (
               <span className="text-gray-300">🛒 Кошик порожній — додайте перший виріб</span>
             ) : (
@@ -218,13 +217,13 @@ export default function Calculator() {
           <button
             onClick={openReview}
             disabled={cart.length === 0}
-            className="bg-white text-anthracite px-4 py-2 rounded-full text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition whitespace-nowrap"
+            className="w-full sm:w-auto bg-white text-anthracite px-4 py-2.5 sm:py-2 rounded-full text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition whitespace-nowrap"
           >
             Надіслати замовлення
           </button>
         </div>
 
-        <div className="bg-gray-50 rounded-3xl p-6 md:p-10 fade-in-up">
+        <div className="bg-gray-50 rounded-3xl p-5 sm:p-6 md:p-10 fade-in-up">
           {/* Крок 1: Категорія */}
           <div className="mb-8">
             <p className="font-medium mb-3">1. Категорія</p>
@@ -320,22 +319,24 @@ export default function Calculator() {
               <label className="text-sm font-medium block mb-2">Висота імпосту (перегородки), см — опціонально</label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={form.impostHeightCm}
                 onChange={(e) => set({ impostHeightCm: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-40"
+                className="border border-gray-300 rounded-lg px-4 py-2.5 w-40 text-base"
                 placeholder="0"
               />
             </div>
           )}
 
-          <div className="mb-8 grid grid-cols-3 gap-4 max-w-lg">
+          <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 max-w-lg">
             <div>
               <label className="text-sm font-medium block mb-2">Ширина, мм</label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={form.widthMm}
                 onChange={(e) => set({ widthMm: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full"
+                className="border border-gray-300 rounded-lg px-3 py-2.5 sm:px-4 sm:py-2 w-full text-base"
                 placeholder="напр. 900"
               />
             </div>
@@ -343,20 +344,22 @@ export default function Calculator() {
               <label className="text-sm font-medium block mb-2">Висота, мм</label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={form.heightMm}
                 onChange={(e) => set({ heightMm: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full"
+                className="border border-gray-300 rounded-lg px-3 py-2.5 sm:px-4 sm:py-2 w-full text-base"
                 placeholder="напр. 1400"
               />
             </div>
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="text-sm font-medium block mb-2">Кількість, шт</label>
               <input
                 type="number"
+                inputMode="numeric"
                 min="1"
                 value={form.quantity}
                 onChange={(e) => set({ quantity: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-2 w-full"
+                className="border border-gray-300 rounded-lg px-3 py-2.5 sm:px-4 sm:py-2 w-full text-base"
               />
             </div>
           </div>
@@ -370,7 +373,7 @@ export default function Calculator() {
 
           <div className="bg-anthracite/5 border border-anthracite/10 rounded-xl p-4 text-sm text-gray-600 mb-8">
             Мінімальна площа для цього типу: <strong>{category.sMin} м²</strong>. Якщо
-            розрахована площа менша — у формулу підставляється Smin.
+            розрахована площа менша — у формулу підставляється мінімально допустима площа.
           </div>
 
           {/* Панель результату — завжди на екрані, навіть без розмірів */}
@@ -380,7 +383,7 @@ export default function Calculator() {
                 <p className="text-sm text-gray-500 mb-2">
                   Площа: {unitResult.rawArea} м²
                   {unitResult.sMinApplied && (
-                    <span className="text-orange-500"> → застосовано Smin {unitResult.sMin} м²</span>
+                    <span className="text-orange-500"> → застосовано мінімально допустиму площу {unitResult.sMin} м²</span>
                   )}
                 </p>
                 <p className="text-sm text-gray-500 mb-1">Ціна за 1 шт: {unitResult.total.toLocaleString("uk-UA")} грн</p>
@@ -413,7 +416,7 @@ export default function Calculator() {
         </div>
 
         {/* Список кошика — завжди видимий блок під калькулятором */}
-        <div className="fade-in-up mt-6 bg-gray-50 rounded-3xl p-6 md:p-8">
+        <div className="fade-in-up mt-6 bg-gray-50 rounded-3xl p-5 sm:p-6 md:p-8">
           <p className="font-medium mb-4">Ваш кошик {cart.length > 0 && `(${cart.length})`}</p>
           {cart.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-6">
@@ -467,7 +470,7 @@ export default function Calculator() {
           className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
           onClick={(e) => e.target === e.currentTarget && closeModal()}
         >
-          <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto p-6 md:p-8 fade-in-up">
+          <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto p-5 sm:p-6 md:p-8 fade-in-up">
             {modalStage === "review" && (
               <>
                 <div className="flex justify-between items-center mb-6">
@@ -499,18 +502,18 @@ export default function Calculator() {
                     placeholder="Ім'я"
                     value={orderData.fullName}
                     onChange={(e) => setOrderData({ ...orderData, fullName: e.target.value })}
-                    className="border border-gray-300 rounded-lg px-4 py-3"
+                    className="border border-gray-300 rounded-lg px-4 py-3 text-base"
                   />
                   <input
                     placeholder="Номер телефону"
                     value={orderData.phone}
                     onChange={(e) => setOrderData({ ...orderData, phone: e.target.value })}
-                    className="border border-gray-300 rounded-lg px-4 py-3"
+                    className="border border-gray-300 rounded-lg px-4 py-3 text-base"
                   />
                   <select
                     value={orderData.messenger}
                     onChange={(e) => setOrderData({ ...orderData, messenger: e.target.value })}
-                    className="border border-gray-300 rounded-lg px-4 py-3"
+                    className="border border-gray-300 rounded-lg px-4 py-3 text-base"
                   >
                     <option value="viber">Viber</option>
                     <option value="whatsapp">WhatsApp</option>
@@ -520,13 +523,13 @@ export default function Calculator() {
                     placeholder="Посилання на Instagram-профіль або нікнейм"
                     value={orderData.contactLink}
                     onChange={(e) => setOrderData({ ...orderData, contactLink: e.target.value })}
-                    className="border border-gray-300 rounded-lg px-4 py-3"
+                    className="border border-gray-300 rounded-lg px-4 py-3 text-base"
                   />
                   <input
                     placeholder="Адреса доставки (місто, вулиця, будинок, квартира)"
                     value={orderData.address}
                     onChange={(e) => setOrderData({ ...orderData, address: e.target.value })}
-                    className="border border-gray-300 rounded-lg px-4 py-3"
+                    className="border border-gray-300 rounded-lg px-4 py-3 text-base"
                   />
                 </div>
 
@@ -539,19 +542,19 @@ export default function Calculator() {
 
                 {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={closeModal}
-                    className="flex-1 border border-anthracite text-anthracite py-4 rounded-full font-medium hover:bg-anthracite/5 transition"
-                  >
-                    ← Редагувати кошик
-                  </button>
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={submitOrder}
                     disabled={submitting}
-                    className="flex-1 bg-anthracite text-white py-4 rounded-full font-medium disabled:opacity-40 hover:opacity-90 transition"
+                    className="w-full sm:flex-1 order-1 sm:order-2 bg-anthracite text-white py-4 rounded-full font-medium disabled:opacity-40 hover:opacity-90 transition"
                   >
                     {submitting ? "Надсилання..." : "Надіслати замовлення"}
+                  </button>
+                  <button
+                    onClick={closeModal}
+                    className="w-full sm:flex-1 order-2 sm:order-1 border border-anthracite text-anthracite py-3.5 sm:py-4 rounded-full font-medium hover:bg-anthracite/5 transition"
+                  >
+                    ← Редагувати кошик
                   </button>
                 </div>
               </>

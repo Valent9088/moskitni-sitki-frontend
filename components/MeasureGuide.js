@@ -3,7 +3,7 @@ export default function MeasureGuide() {
     <section className="section-padding bg-gray-50" id="measure">
       <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-10 items-center">
         <div>
-          <h2 className="text-3xl md:text-4xl font-semibold mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-6">
             Як правильно зробити заміри
           </h2>
           <p className="text-gray-600 leading-relaxed">

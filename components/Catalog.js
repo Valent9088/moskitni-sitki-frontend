@@ -25,7 +25,7 @@ export default function Catalog() {
   return (
     <section className="section-padding bg-gray-50" id="catalog">
       <h2 className="text-3xl md:text-4xl font-semibold mb-12 text-center">Каталог</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-8 max-w-6xl mx-auto">
         {PRODUCTS.map((p) => (
           <div key={p.title} className="fade-in-up bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition">
             {/* TODO: замінити на реальне фото товару */}
